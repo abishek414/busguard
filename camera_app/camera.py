@@ -77,7 +77,9 @@ class AzureLink:
                     self.result = {"text": f"Azure error {r.status_code}: {r.text[:60]}", "colour": (0, 165, 255)}
                     continue
                 d = r.json()
-                if d["fight"]:
+                if d.get("view") == "blocked":
+                    self.result = {"text": "Azure AI: camera blocked or view unclear", "colour": (0, 165, 255)}
+                elif d["fight"]:
                     self.result = {"text": f"Azure AI: POSSIBLE FIGHT {d['score']}%  "
                                            f"({d['hits']} of last {d['window']})",
                                    "colour": (0, 0, 255)}

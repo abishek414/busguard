@@ -109,6 +109,41 @@ class FlowTest(TestCase):
             self.assertFalse(self.send_photo(s).json()["record"])
         self.assertFalse(self.send_photo(0.9).json()["record"])     # only 1 of the last 6
 
+    def test_blocked_camera_and_no_people_are_not_fights(self):
+        from types import SimpleNamespace
+        from . import ai
+        rng = np.random.default_rng(1)
+        scene = rng.integers(0, 255, (240, 320, 3), dtype=np.uint8)          # lots of detail
+        self.assertIsNone(ai.view_problem(scene))
+        self.assertEqual(ai.view_problem(np.full((240, 320, 3), 5, np.uint8)), "too dark")
+        self.assertEqual(ai.view_problem(np.full((240, 320, 3), 150, np.uint8)), "covered")
+        shapes = np.zeros((240, 320, 3), np.uint8)
+        cv2.rectangle(shapes, (40, 40), (160, 200), (230, 230, 230), -1)
+        cv2.circle(shapes, (240, 120), 60, (120, 120, 120), -1)
+        self.assertIsNone(ai.view_problem(shapes))                                # sharp edges
+        self.assertEqual(ai.view_problem(cv2.GaussianBlur(shapes, (41, 41), 0)), "very blurry")
+        # A hand over the lens: score 0, whatever the fight model would say
+        hand = np.full((240, 320, 3), 160, np.uint8)
+        score, note = ai.score_frame(hand)
+        self.assertEqual(score, 0.0)
+        self.assertTrue(note.startswith(ai.CAMERA_BLOCKED))
+        # Fight model says 90% but nobody is in the picture: doesn't count
+        fake = lambda img, verbose=False: [SimpleNamespace(probs=SimpleNamespace(data=[0.9, 0.1]))]
+        with mock.patch("alerts.ai._load", return_value=mock.Mock(side_effect=fake, names={0: "fight", 1: "normal"})), \
+             mock.patch("alerts.ai.os.path.exists", return_value=True):
+            with mock.patch("alerts.ai.count_people", return_value=0):
+                score, note = ai.score_frame(scene)
+                self.assertLess(score, 0.6)
+                self.assertTrue(note.startswith(ai.NO_PEOPLE))
+            with mock.patch("alerts.ai.count_people", return_value=2):
+                self.assertEqual(ai.score_frame(scene), (0.9, "Fight model"))
+        # The camera and the control room are told the camera is blocked
+        with mock.patch("alerts.views.ai.score_frame", return_value=(0.0, ai.CAMERA_BLOCKED + " (covered)")):
+            reply = self.client.post("/api/frame/", {"image": photo()}, **self.key).json()
+        self.assertEqual((reply["view"], reply["record"]), ("blocked", False))
+        self.client.login(username="control", password="busguard123")
+        self.assertTrue(self.client.get("/api/control/feed/").json()["buses"][0]["blocked"])
+
     def test_streak_asks_for_clip_then_cooldown(self):
         self.assertFalse(self.send_photo(0.8).json()["record"])
         self.assertFalse(self.send_photo(0.9).json()["record"])

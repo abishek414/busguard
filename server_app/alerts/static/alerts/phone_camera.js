@@ -112,7 +112,10 @@ async function sendPhoto() {
 }
 
 function showScore(data) {
-  if (data.fight) {
+  if (data.view === "blocked") {
+    aiBox.className = "pc-ai blocked";
+    aiBox.textContent = "Camera blocked or view unclear";
+  } else if (data.fight) {
     aiBox.className = "pc-ai fight";
     aiBox.textContent = `POSSIBLE FIGHT ${data.score}%` + (data.hits ? ` (${data.hits} of last ${data.window})` : "");
   } else {

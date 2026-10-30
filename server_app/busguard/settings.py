@@ -38,6 +38,10 @@ FIGHT_THRESHOLD = float(os.environ.get("FIGHT_THRESHOLD", "0.6"))
 # look like a fight (e.g. 3 of the last 6), so one blocked or blurry photo doesn't stop it
 FIGHT_HITS = int(os.environ.get("FIGHT_HITS", os.environ.get("FIGHT_STREAK", "3")))
 FIGHT_WINDOW = int(os.environ.get("FIGHT_WINDOW", "6"))
+# A fight score only counts when at least this many people are in the picture (0 = don't check)
+FIGHT_MIN_PEOPLE = int(os.environ.get("FIGHT_MIN_PEOPLE", "1"))
+# Pictures less sharp than this count as "camera blocked or view unclear" (score 0)
+VIEW_MIN_SHARPNESS = float(os.environ.get("VIEW_MIN_SHARPNESS", "80"))
 # Seconds before the same bus can trigger another alert
 ALERT_COOLDOWN = int(os.environ.get("ALERT_COOLDOWN", "60"))
 # Self-learning: where the server keeps training photos, and how long a retrain runs

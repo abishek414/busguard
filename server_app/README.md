@@ -133,6 +133,8 @@ python manage.py test alerts
 | `FIGHT_THRESHOLD` | `0.6` | A photo counts as "fight" at this AI score or above |
 | `FIGHT_HITS` | `3` | "Fight" photos needed... |
 | `FIGHT_WINDOW` | `6` | ...out of this many latest photos before a clip is requested |
+| `FIGHT_MIN_PEOPLE` | `1` | A fight score only counts with at least this many people in the picture |
+| `VIEW_MIN_SHARPNESS` | `80` | Less sharp pictures count as "camera blocked or view unclear" |
 | `ALERT_COOLDOWN` | `60` | Seconds before the same bus can raise another alert |
 | `OFFICER_REPLY_SECONDS` | `60` | Seconds before the no-reply alarm |
 | `SHOW_LIVE_FRAMES` | `True` | Show each bus's latest photo in the control room |
@@ -141,12 +143,18 @@ python manage.py test alerts
 
 ## The AI
 
-- **Before training** (no `models/fight_cls.pt`), `ai.py` uses a simple **placeholder rule**
-  (two people overlapping = 70%). It's only there so you can test everything on day one.
-  The control room shows "AI: placeholder rule".
-- **After training**, copy `fight_cls.pt` into `models/` and restart the server. The control room
-  shows "AI: trained fight model".
-- Train it on Google Colab with `training/train_fight_model.ipynb` (about 30-40 minutes, free GPU).
+- **Fight model** (`models/fight_cls.pt`): a YOLOv8 image classifier trained on the Kaggle
+  "Real Life Violence Situations" videos (97.5% on test photos, 392 of 400 unseen videos right).
+  It gives each photo a fight score from 0 to 100%.
+- **Camera blocked check:** a covered, very dark, almost blank or very blurry picture (a hand or bag in
+  front of the lens) gets score 0 and shows **"Camera blocked or view unclear"** on the camera and in
+  the control room. The training videos' fights are mostly shaky, blurry phone footage, so without this
+  check the model often called such pictures a fight.
+- **Person check:** a high fight score only counts if the YOLOv8 person detector finds someone in the
+  picture.
+- **3 of the last 6 photos** must look like a fight before a clip is requested.
+- Without `fight_cls.pt`, a simple placeholder rule is used (two people overlapping = 70%) and the
+  control room shows "AI: placeholder rule".
 
 ## Self-learning (Retrain AI)
 

@@ -141,6 +141,7 @@ class Bus(models.Model):
                             if self.last_seen else None),
             "score": None if self.last_score is None else round(self.last_score * 100),
             "fight": self.last_score is not None and self.last_score >= settings.FIGHT_THRESHOLD,
+            "blocked": self.last_note.startswith("Camera blocked"),
             "frame_url": frame_url,
         }
 

@@ -48,6 +48,7 @@
          background: rgba(0, 0, 0, .6); color: #fff; font-weight: 600; }
 .pc-ai.normal { background: rgba(25, 135, 84, .85); }
 .pc-ai.fight { background: rgba(220, 53, 69, .9); }
+.pc-ai.blocked { background: rgba(255, 153, 0, .9); color: #000; }
 .pc-rec { position: absolute; bottom: .5rem; left: .5rem; padding: .25rem .6rem; border-radius: .35rem;
           background: #dc3545; color: #fff; font-weight: 700; animation: pc-blink 1s infinite; }
 @keyframes pc-blink { 50% { opacity: .55; } }

@@ -117,6 +117,15 @@ def phone_camera(request, key):
     })
 
 
+def view_status(note):
+    """'blocked' (camera covered, dark or blurry), 'no_people', or 'ok' - from the AI's note."""
+    if note.startswith(ai.CAMERA_BLOCKED):
+        return "blocked"
+    if note.startswith(ai.NO_PEOPLE):
+        return "no_people"
+    return "ok"
+
+
 @csrf_exempt
 @require_POST
 def frame(request):
@@ -178,6 +187,7 @@ def frame(request):
     return JsonResponse({
         "score": round(score * 100),
         "fight": is_fight,
+        "view": view_status(note),          # "ok", "blocked" or "no_people"
         "hits": hits,                       # photos that looked like a fight...
         "window": settings.FIGHT_WINDOW,    # ...out of the last this-many
         "streak": hits,                     # (older name for "hits")

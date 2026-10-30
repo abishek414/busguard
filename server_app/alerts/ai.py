@@ -6,6 +6,14 @@ The bus camera sends a small photo about once a second. For each photo:
   the photo shows a fight.
 * If not, a simple placeholder rule is used (YOLO person detector: two people
   overlapping). It is only there so the system can be tested before training.
+
+Two checks stop false alarms from things that aren't people fighting:
+* View check: a covered, very dark, almost blank or very blurry picture (e.g. a hand or
+  bag right in front of the lens) gets score 0 and the note "Camera blocked or view unclear".
+  The fight model learned from shaky, blurry phone videos, so it would otherwise often
+  call such pictures a fight.
+* Person check: a high fight score only counts if the person detector finds at least
+  FIGHT_MIN_PEOPLE people in the picture.
 """
 import logging
 import os
@@ -44,8 +52,37 @@ def _boxes_overlap(a, b):
     return min(ax2, bx2) > max(ax1, bx1) and min(ay2, by2) > max(ay1, by1)
 
 
+CAMERA_BLOCKED = "Camera blocked or view unclear"
+NO_PEOPLE = "No person in view"
+
+
+def view_problem(image):
+    """Why the camera can't see the scene, or None if the picture looks normal.
+    Measured on a small grey copy: brightness, contrast and sharpness (edge detail)."""
+    import cv2
+    grey = cv2.cvtColor(cv2.resize(image, (160, 120)), cv2.COLOR_BGR2GRAY)
+    if grey.mean() < 20:
+        return "too dark"
+    if grey.std() < 8:
+        return "covered"
+    if cv2.Laplacian(grey, cv2.CV_64F).var() < settings.VIEW_MIN_SHARPNESS:
+        return "very blurry"
+    return None
+
+
+def count_people(image):
+    detector = _load("yolov8n.pt")
+    with _predict_lock:
+        result = detector(image, classes=[0], conf=0.25, verbose=False)[0]
+    return len(result.boxes)
+
+
 def score_frame(image):
     """image = OpenCV BGR picture. Returns (score 0-1, short note)."""
+    problem = view_problem(image)
+    if problem:
+        return 0.0, f"{CAMERA_BLOCKED} ({problem})"
+
     model_path = str(settings.FIGHT_MODEL_PATH)
     if os.path.exists(model_path):
         model = _load(model_path)
@@ -54,6 +91,11 @@ def score_frame(image):
         with _predict_lock:
             result = model(image, verbose=False)[0]
         score = float(result.probs.data[fight_idx])
+        # Only look for people when it matters (saves time on normal photos)
+        if score >= settings.FIGHT_THRESHOLD and settings.FIGHT_MIN_PEOPLE > 0:
+            people = count_people(image)
+            if people < settings.FIGHT_MIN_PEOPLE:
+                return min(score, settings.FIGHT_THRESHOLD / 2), f"{NO_PEOPLE} (fight model said {score:.0%})"
         return score, "Fight model"
 
     # Placeholder rule until the fight model is trained

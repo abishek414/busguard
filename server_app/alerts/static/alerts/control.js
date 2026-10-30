@@ -124,6 +124,7 @@ function renderBuses(buses, active) {
   if (!buses.length) return;
   $("bus-list").innerHTML = buses.map(b => {
     const ai = b.score == null ? "waiting for photos"
+      : b.blocked ? `<b class="text-warning-emphasis">camera blocked or view unclear</b>`
       : b.fight ? `<b class="text-danger">possible fight ${b.score}%</b>`
       : `<span class="text-success">normal ${b.score}%</span>`;
     const ago = b.seconds_ago == null ? "" : b.seconds_ago < 60 ? `${b.seconds_ago}s ago` : "a while ago";
