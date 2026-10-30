@@ -1,0 +1,12 @@
+venv/
+__pycache__/
+*.pyc
+.env
+db.sqlite3
+media/
+staticfiles/
+training_data/
+models/history/
+# Only the trained fight model is uploaded
+*.pt
+!models/fight_cls.pt

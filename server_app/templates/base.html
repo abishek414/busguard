@@ -1,0 +1,45 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}BusGuard{% endblock %}</title>
+  <link href="{% static 'alerts/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'alerts/busguard.css' %}" rel="stylesheet">
+  {% block head %}{% endblock %}
+</head>
+<body class="bg-light">
+<nav class="navbar navbar-dark bg-dark mb-3">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="{% url 'alerts:home' %}">BusGuard <small class="text-secondary">Darwin</small></a>
+    {% if user.is_superuser or user.profile.role == "manager" %}
+      <div class="navbar-nav flex-row gap-3 me-auto ms-3 small">
+        <a class="nav-link" href="{% url 'alerts:manage' %}">Overview</a>
+        <a class="nav-link" href="{% url 'alerts:manage_accounts' %}">Accounts</a>
+        <a class="nav-link" href="{% url 'alerts:manage_buses' %}">Buses &amp; areas</a>
+        <a class="nav-link" href="{% url 'alerts:manage_history' %}">Incident history</a>
+        <a class="nav-link" href="{% url 'alerts:manage_ai' %}">AI improvement</a>
+        <a class="nav-link" href="{% url 'alerts:control' %}">Control room</a>
+      </div>
+    {% endif %}
+    {% if user.is_authenticated %}
+      <div class="d-flex align-items-center gap-2">
+        <span class="text-secondary small d-none d-sm-inline">{{ user.get_full_name|default:user.username }}</span>
+        <form method="post" action="{% url 'logout' %}" class="m-0">
+          {% csrf_token %}
+          <button class="btn btn-sm btn-outline-light">Log out</button>
+        </form>
+      </div>
+    {% endif %}
+  </div>
+</nav>
+<main class="{% block container %}container{% endblock %} pb-5">
+  {% for message in messages %}
+    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} py-2">{{ message }}</div>
+  {% endfor %}
+  {% block content %}{% endblock %}
+</main>
+<script src="{% static 'alerts/common.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

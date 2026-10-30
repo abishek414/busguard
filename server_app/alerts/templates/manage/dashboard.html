@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Manager - BusGuard{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">System manager</h1>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <h2 class="h6 text-secondary text-uppercase">Accounts</h2>
+      <p class="mb-1"><b>{{ officers }}</b> field officers</p>
+      <p class="mb-1"><b>{{ checkers }}</b> control room checkers</p>
+      <p class="mb-3"><b>{{ managers }}</b> system managers</p>
+      <a class="btn btn-sm btn-primary" href="{% url 'alerts:manage_accounts' %}">Manage accounts</a>
+      <a class="btn btn-sm btn-outline-primary" href="{% url 'alerts:manage_account_new' %}">+ New account</a>
+    </div></div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <h2 class="h6 text-secondary text-uppercase">Buses and areas</h2>
+      <p class="mb-1"><b>{{ buses }}</b> buses and areas</p>
+      <p class="mb-3"><b>{{ buses_online }}</b> cameras online now</p>
+      <a class="btn btn-sm btn-primary" href="{% url 'alerts:manage_buses' %}">Manage</a>
+      <a class="btn btn-sm btn-outline-primary" href="{% url 'alerts:manage_bus_new' %}">+ Add bus or area</a>
+    </div></div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <h2 class="h6 text-secondary text-uppercase">Control room</h2>
+      <p class="mb-3"><b>{{ open_incidents }}</b> open incidents</p>
+      <a class="btn btn-sm btn-primary" href="{% url 'alerts:control' %}">Open control room</a>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

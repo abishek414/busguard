@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Accounts - BusGuard{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <h1 class="h4 m-0">Accounts</h1>
+  <div class="d-flex gap-2">
+    <form method="get" class="m-0">
+      <select name="role" class="form-select form-select-sm" onchange="this.form.submit()" aria-label="Show role">
+        <option value="">All roles</option>
+        {% for value, label in roles %}
+          <option value="{{ value }}" {% if value == role %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </form>
+    <a class="btn btn-sm btn-primary text-nowrap" href="{% url 'alerts:manage_account_new' %}">+ New account</a>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr><th>Username</th><th>Name</th><th>Role</th><th>Phone</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+      {% for u in users %}
+        <tr>
+          <td class="fw-semibold">{{ u.username }}{% if u == user %} <span class="badge text-bg-secondary">you</span>{% endif %}</td>
+          <td>{{ u.get_full_name|default:"-" }}</td>
+          <td>{% if u.is_superuser and not u.profile %}Superuser{% else %}{{ u.profile.get_role_display|default:"(no role)" }}{% endif %}</td>
+          <td>{{ u.profile.phone|default:"-" }}</td>
+          <td>
+            {% if u.profile.role == "officer" %}
+              {% if u.profile.on_duty %}<span class="badge text-bg-success">On duty</span>{% else %}<span class="badge text-bg-secondary">Off duty</span>{% endif %}
+            {% endif %}
+          </td>
+          <td class="text-end text-nowrap">
+            <a class="btn btn-sm btn-outline-primary" href="{% url 'alerts:manage_account_edit' u.pk %}">Edit</a>
+            {% if u != user %}<a class="btn btn-sm btn-outline-danger" href="{% url 'alerts:manage_account_delete' u.pk %}">Delete</a>{% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6" class="text-secondary text-center py-4">No accounts.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

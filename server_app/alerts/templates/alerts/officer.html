@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Officer - BusGuard{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'alerts/leaflet/leaflet.css' %}">{% endblock %}
+{% block content %}
+
+<div class="card shadow-sm mb-3">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h1 class="h5 m-0">{{ profile.display_name }}</h1>
+      <span id="duty-badge" class="badge text-bg-secondary">Off duty</span>
+    </div>
+    <p id="location-text" class="small text-secondary mb-3">Location not shared yet.</p>
+
+    <button id="duty-btn" class="btn btn-primary w-100 btn-lg">Start duty</button>
+
+    <p class="small text-secondary mt-2 mb-0">Allow location when asked, so the control room can see where you are.</p>
+  </div>
+</div>
+
+<div id="alert-banner" class="alert alert-danger d-none fw-semibold" role="alert"></div>
+<div id="map" class="map-box small shadow-sm mb-3"></div>
+<h2 class="h6 text-uppercase text-secondary">My incidents</h2>
+<div id="jobs"><div class="text-secondary">Start duty to receive incidents.</div></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'alerts/leaflet/leaflet.js' %}"></script>
+<script src="{% static 'alerts/map.js' %}"></script>
+<script src="{% static 'alerts/officer.js' %}"></script>
+{% endblock %}

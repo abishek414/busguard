@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Connect {{ bus.name }} - BusGuard{% endblock %}
+{% block content %}
+<a href="{% url 'alerts:manage_buses' %}" class="small">&larr; Buses &amp; areas</a>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 my-2">
+  <h1 class="h4 m-0">Connect {{ bus.name }}</h1>
+  <a class="btn btn-sm btn-outline-primary" href="{% url 'alerts:manage_bus_edit' bus.pk %}">Edit camera / GPS</a>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <!-- Camera -->
+    <div class="card shadow-sm mb-3"><div class="card-body">
+      <div class="d-flex justify-content-between align-items-start">
+        <h2 class="h6 text-uppercase text-secondary">Camera</h2>
+        {% if bus.is_online %}<span class="badge text-bg-success">Connected</span>
+        {% else %}<span class="badge text-bg-secondary">Not connected</span>{% endif %}
+      </div>
+      <p class="mb-2"><b>{{ bus.get_camera_type_display }}</b>
+        {% if bus.last_seen %}<span class="small text-secondary">&middot; last photo {{ bus.last_seen|timesince }} ago</span>{% endif %}</p>
+
+      {% if bus.camera_type == "phone" %}
+        <p class="small mb-2">Open this link on the phone (Safari or Chrome) and tap <b>Start</b>. The phone sends a photo
+          every second, records the clip when the AI asks, and has a <b>Send alert now</b> button. No app to install.</p>
+        <div class="input-group mb-2">
+          <input class="form-control font-monospace small" id="phone-url" value="{{ phone_url }}" readonly>
+          <button class="btn btn-outline-secondary" type="button" data-copy="phone-url">Copy</button>
+        </div>
+        <a class="btn btn-sm btn-success" href="{{ phone_url }}" target="_blank" rel="noopener">Open phone camera page</a>
+        <p class="small text-secondary mt-2 mb-0">Phones only allow the camera and GPS on <b>https://</b> addresses, so use
+          the Azure address.</p>
+      {% else %}
+        <p class="small mb-2">CCTV stream:
+          {% if bus.camera_address %}<code>{{ bus.camera_address }}</code>
+          {% else %}<span class="text-danger">not set yet</span>
+            (<a href="{% url 'alerts:manage_bus_edit' bus.pk %}">add it</a>){% endif %}</p>
+        <p class="small mb-2">On the small computer next to the camera (connected to the CCTV network), in the
+          <code>camera_app</code> folder, run this once. It reads the stream address from here:</p>
+        <div class="input-group mb-2">
+          <input class="form-control font-monospace small" id="cam-cmd" value="{{ command }}" readonly>
+          <button class="btn btn-outline-secondary" type="button" data-copy="cam-cmd">Copy</button>
+        </div>
+        <p class="small text-secondary mb-0">For a test without a CCTV camera, add <code>--source</code>:
+          <code>--source 0</code> for a webcam, or the path of a video file.</p>
+      {% endif %}
+    </div></div>
+
+    <!-- Key -->
+    <div class="card shadow-sm mb-3"><div class="card-body">
+      <h2 class="h6 text-uppercase text-secondary">Bus key</h2>
+      <p class="small mb-2">The secret key the camera uses to connect (already in the link and command above).
+        Keep it private, like a password.</p>
+      <div class="input-group mb-2">
+        <input class="form-control font-monospace" id="bus-key" value="{{ bus.device_key }}" readonly>
+        <button class="btn btn-outline-secondary" type="button" data-copy="bus-key">Copy</button>
+      </div>
+      <form method="post" action="{% url 'alerts:manage_bus_new_key' bus.pk %}"
+            onsubmit="return confirm('Make a new key? The old key stops working straight away.')">
+        {% csrf_token %}<button class="btn btn-sm btn-outline-danger">Make a new key</button>
+      </form>
+    </div></div>
+  </div>
+
+  <div class="col-lg-5">
+    <!-- GPS -->
+    <div class="card shadow-sm mb-3"><div class="card-body">
+      <h2 class="h6 text-uppercase text-secondary">GPS</h2>
+      <p class="mb-2"><b>{{ bus.get_gps_source_display }}</b></p>
+
+      {% if bus.gps_source == "feed" %}
+        <p class="small mb-1">Bus GPS tracker ID <code>{{ bus.vehicle_id }}</code>, read from the fleet GPS feed
+          <span class="text-secondary text-break">({{ feed.url|default:"no feed address yet" }})</span>.</p>
+        <p class="small mb-2">Feed:
+          {% if not feed.url %}<span class="text-danger">not set up</span>
+          {% elif feed.last_ok %}<span class="text-success">working</span>
+          {% elif feed.last_checked_at %}<span class="text-danger">problem</span>
+          {% else %}<span class="text-secondary">not checked yet</span>{% endif %}
+          {% if feed.last_message %}<span class="text-secondary">&middot; {{ feed.last_message }}</span>{% endif %}</p>
+        <p class="small text-secondary mb-2">The server reads the feed every few seconds while the control room is open.</p>
+      {% elif bus.gps_source == "fixed" %}
+        <p class="small mb-2">Shown on the map at {{ bus.fixed_latitude|floatformat:5 }}, {{ bus.fixed_longitude|floatformat:5 }}.
+          No GPS needed.</p>
+      {% else %}
+        <p class="small mb-2">The phone sends its own GPS with every photo. Nothing more to connect.</p>
+      {% endif %}
+
+      <hr>
+      <p class="small mb-2">Position now:
+        {% if bus.latitude is not None %}<b>{{ bus.latitude|floatformat:5 }}, {{ bus.longitude|floatformat:5 }}</b>
+          {% if bus.location_updated_at %}<span class="text-secondary">({{ bus.location_updated_at|timesince }} ago)</span>{% endif %}
+        {% else %}<span class="text-secondary">none yet</span>{% endif %}</p>
+      <form method="post" action="{% url 'alerts:manage_bus_test_gps' bus.pk %}">
+        {% csrf_token %}<button class="btn btn-sm btn-success">Test GPS</button>
+      </form>
+    </div></div>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll("[data-copy]").forEach(btn => btn.addEventListener("click", async () => {
+  const el = document.getElementById(btn.dataset.copy);
+  el.select();
+  try { await navigator.clipboard.writeText(el.value); } catch (e) { document.execCommand("copy"); }
+  btn.textContent = "Copied";
+  setTimeout(() => (btn.textContent = "Copy"), 1500);
+}));
+</script>
+{% endblock %}

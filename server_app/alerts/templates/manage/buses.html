@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Buses and areas - BusGuard{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 m-0">Buses and areas</h1>
+  <div class="d-flex gap-2">
+    <a class="btn btn-sm btn-primary" href="{% url 'alerts:manage_bus_new' %}">+ Add bus or area</a>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr><th>Name</th><th>Camera</th><th>GPS</th><th>Last position</th><th></th></tr>
+      </thead>
+      <tbody>
+      {% for b in buses %}
+        <tr class="{% if not b.enabled %}text-secondary{% endif %}">
+          <td>
+            <div class="fw-semibold">{{ b.name }}</div>
+            <div class="small text-secondary">{{ b.get_kind_display }}</div>
+            {% if not b.enabled %}<span class="badge text-bg-secondary">switched off</span>{% endif %}
+            {% if b.notes %}<div class="small text-secondary">{{ b.notes }}</div>{% endif %}
+          </td>
+          <td>
+            <div class="small">{{ b.get_camera_type_display }}</div>
+            {% if b.is_online %}<span class="badge text-bg-success">Online</span>
+            {% else %}<span class="badge text-bg-secondary">Offline</span>{% endif %}
+            {% if b.last_seen %}<div class="small text-secondary">seen {{ b.last_seen|timesince }} ago</div>{% endif %}
+          </td>
+          <td>
+            {{ b.get_gps_source_display }}
+            {% if b.gps_source == "feed" %}<div class="small text-secondary">Tracker ID <code>{{ b.vehicle_id }}</code></div>{% endif %}
+            {% if b.gps_source == "feed" and not b.vehicle_id %}<div class="small text-danger">tracker ID missing</div>{% endif %}
+          </td>
+          <td class="small">
+            {% if b.latitude is not None %}{{ b.latitude|floatformat:4 }}, {{ b.longitude|floatformat:4 }}
+            {% else %}<span class="text-secondary">none yet</span>{% endif %}
+          </td>
+          <td class="text-end text-nowrap">
+            <a class="btn btn-sm btn-success" href="{% url 'alerts:manage_bus_connect' b.pk %}">Connect</a>
+            <a class="btn btn-sm btn-outline-primary" href="{% url 'alerts:manage_bus_edit' b.pk %}">Edit</a>
+            <a class="btn btn-sm btn-outline-danger" href="{% url 'alerts:manage_bus_delete' b.pk %}">Delete</a>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5" class="text-secondary text-center py-4">No buses yet. Click <b>+ Add bus</b>.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

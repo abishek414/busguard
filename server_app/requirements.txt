@@ -1,0 +1,8 @@
+Django>=5.0,<6.0
+requests
+ultralytics>=8.1
+opencv-python-headless>=4.8
+numpy
+gunicorn
+imageio-ffmpeg
+gtfs-realtime-bindings

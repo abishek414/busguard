@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{% if bus %}Edit {{ bus.name }}{% else %}Add a bus or area{% endif %} - BusGuard{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'alerts/leaflet/leaflet.css' %}">{% endblock %}
+{% block content %}
+<a href="{% url 'alerts:manage_buses' %}" class="small">&larr; Buses &amp; areas</a>
+<h1 class="h4 my-2">{% if bus %}Edit {{ bus.name }}{% else %}Add a bus or area{% endif %}</h1>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-danger py-2">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+  <div class="row g-3">
+    <div class="col-lg-6">
+      <!-- 1. Bus -->
+      <div class="card shadow-sm mb-3"><div class="card-body">
+        <h2 class="h6 text-uppercase text-secondary">1. Bus or area</h2>
+        <p class="small mb-2">{{ form.kind.label }}</p>
+        <div class="mb-3">
+          {% for radio in form.kind %}
+            <div class="form-check form-check-inline">
+              {{ radio.tag }}
+              <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+            </div>
+          {% endfor %}
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+          {{ form.name }}
+          {% for e in form.name.errors %}<div class="small text-danger">{{ e }}</div>{% endfor %}
+          <div class="form-text" id="name-help">Shown in the control room.</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.notes.id_for_label }}">Notes (optional)</label>
+          {{ form.notes }}
+        </div>
+        <div class="form-check">
+          {{ form.enabled }}
+          <label class="form-check-label" for="{{ form.enabled.id_for_label }}">{{ form.enabled.label }}</label>
+        </div>
+      </div></div>
+
+      <!-- 2. Camera -->
+      <div class="card shadow-sm"><div class="card-body">
+        <h2 class="h6 text-uppercase text-secondary">2. Camera</h2>
+        <p class="small mb-2">{{ form.camera_type.label }}</p>
+        {% for radio in form.camera_type %}
+          <div class="form-check mb-1">
+            {{ radio.tag }}
+            <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+          </div>
+        {% endfor %}
+        <div class="form-text mb-3" id="cam-help"></div>
+
+        <div id="cam-address">
+          <label class="form-label" for="{{ form.camera_address.id_for_label }}">{{ form.camera_address.label }}</label>
+          {{ form.camera_address }}
+          {% for e in form.camera_address.errors %}<div class="small text-danger">{{ e }}</div>{% endfor %}
+          <div class="form-text">e.g. <code>rtsp://192.168.1.10:554/stream1</code>, from the CCTV recorder's settings.</div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- 3. GPS -->
+    <div class="col-lg-6">
+      <div class="card shadow-sm"><div class="card-body">
+        <h2 class="h6 text-uppercase text-secondary">3. GPS</h2>
+        <div id="gps-phone" class="alert alert-success small mb-0">
+          The phone sends its own GPS with every photo, so the position on the map is where the phone is.
+          Nothing to set up here.
+        </div>
+        <div id="gps-choice">
+        <p class="small mb-2">{{ form.gps_source.label }}</p>
+        {% for radio in form.gps_source %}
+          <div class="form-check mb-1">
+            {{ radio.tag }}
+            <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+          </div>
+        {% endfor %}
+        {% for e in form.gps_source.errors %}<div class="small text-danger">{{ e }}</div>{% endfor %}
+        <div class="form-text mb-3" id="gps-help"></div>
+
+        <div id="feed-fields">
+          <div class="mb-3">
+            <label class="form-label" for="{{ form.vehicle_id.id_for_label }}">{{ form.vehicle_id.label }}</label>
+            {{ form.vehicle_id }}
+            {% for e in form.vehicle_id.errors %}<div class="small text-danger">{{ e }}</div>{% endfor %}
+            <div class="form-text">The ID of the GPS tracker fitted in this bus (its Vehicle ID in the operator's
+              tracking system).</div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label" for="{{ feed_form.url.id_for_label }}">{{ feed_form.url.label }}</label>
+            {{ feed_form.url }}
+            {% for e in feed_form.url.errors %}<div class="small text-danger">{{ e }}</div>{% endfor %}
+            <div class="form-text">The operator's live vehicle positions (GTFS-Realtime). One address for the whole
+              fleet, so every bus on the feed uses it.</div>
+          </div>
+          <details class="small mb-2">
+            <summary class="text-secondary">Access key (only if the feed needs one)</summary>
+            <div class="row g-2 mt-1">
+              <div class="col-6"><label class="form-label">Header name</label>{{ feed_form.header_name }}</div>
+              <div class="col-6"><label class="form-label">Key</label>{{ feed_form.header_value }}</div>
+            </div>
+          </details>
+        </div>
+
+        <div id="fixed-fields">
+          <div class="row g-2 mb-2">
+            <div class="col-6"><label class="form-label" for="{{ form.fixed_latitude.id_for_label }}">Latitude</label>{{ form.fixed_latitude }}</div>
+            <div class="col-6"><label class="form-label" for="{{ form.fixed_longitude.id_for_label }}">Longitude</label>{{ form.fixed_longitude }}</div>
+          </div>
+          {% for e in form.fixed_latitude.errors %}<div class="small text-danger">{{ e }}</div>{% endfor %}
+          <div class="form-text mb-1">Click the map to choose the spot.</div>
+          <div id="pick-map" class="map-box small"></div>
+        </div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2 mt-3">
+    <button class="btn btn-primary">Save and connect</button>
+    <a class="btn btn-outline-secondary" href="{% url 'alerts:manage_buses' %}">Cancel</a>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'alerts/leaflet/leaflet.js' %}"></script>
+<script src="{% static 'alerts/map.js' %}"></script>
+<script>
+const CAM_HELP = {
+  cctv: "A CCTV camera on a bus or at a station. The small computer next to it reads the camera's live stream.",
+  phone: "A phone is the camera: it opens the phone camera page (link on the next page). No address needed.",
+};
+const GPS_HELP = {
+  feed: "The GPS tracker already fitted in the bus. Its position comes through the operator's fleet GPS feed.",
+  fixed: "The camera doesn't move (e.g. a bus station or interchange), so no GPS is needed. Click the map to place it.",
+};
+const NAME_HELP = {
+  bus: 'Shown in the control room, e.g. "Bus 4 - Casuarina".',
+  area: 'Shown in the control room, e.g. "Darwin City Bus Interchange".',
+};
+let pickMap = null, pin = null;
+const lat = document.getElementById("{{ form.fixed_latitude.id_for_label }}");
+const lon = document.getElementById("{{ form.fixed_longitude.id_for_label }}");
+const camAddress = document.getElementById("{{ form.camera_address.id_for_label }}");
+
+function showCamera() {
+  const v = document.querySelector("input[name=camera_type]:checked")?.value;
+  document.getElementById("cam-help").textContent = CAM_HELP[v] || "";
+  document.getElementById("cam-address").style.display = v === "cctv" ? "" : "none";
+  document.getElementById("gps-phone").style.display = v === "phone" ? "" : "none";
+  document.getElementById("gps-choice").style.display = v === "phone" ? "none" : "";
+  showGps();
+}
+
+function showKind(changed) {
+  const v = document.querySelector("input[name=kind]:checked")?.value;
+  document.getElementById("name-help").textContent = NAME_HELP[v] || "";
+  // A station or area doesn't move: suggest a fixed location
+  if (changed && v === "area") document.querySelector("input[name=gps_source][value=fixed]").checked = true;
+  if (changed && v === "bus") document.querySelector("input[name=gps_source][value=feed]").checked = true;
+  showGps();
+}
+
+function showGps() {
+  const v = document.querySelector("input[name=gps_source]:checked")?.value;
+  document.getElementById("gps-help").textContent = GPS_HELP[v] || "";
+  document.getElementById("feed-fields").style.display = v === "feed" ? "" : "none";
+  document.getElementById("fixed-fields").style.display = v === "fixed" ? "" : "none";
+  if (v === "fixed" && document.getElementById("gps-choice").style.display !== "none") {
+    if (!pickMap) {
+      pickMap = makeMap("pick-map", 11);
+      pickMap.on("click", e => { lat.value = e.latlng.lat.toFixed(5); lon.value = e.latlng.lng.toFixed(5); placePin(); });
+    }
+    setTimeout(() => { pickMap.invalidateSize(); placePin(); }, 50);
+  }
+}
+function placePin() {
+  if (!pickMap || !lat.value || !lon.value) return;
+  const p = [Number(lat.value), Number(lon.value)];
+  if (!pin) pin = L.circleMarker(p, { radius: 9, color: "#fff", weight: 2, fillColor: "#198754", fillOpacity: 1 }).addTo(pickMap);
+  pin.setLatLng(p);
+  pickMap.setView(p, 14);
+}
+document.querySelectorAll("input[name=camera_type]").forEach(r => r.addEventListener("change", showCamera));
+document.querySelectorAll("input[name=kind]").forEach(r => r.addEventListener("change", () => showKind(true)));
+document.querySelectorAll("input[name=gps_source]").forEach(r => r.addEventListener("change", showGps));
+[lat, lon].forEach(el => el.addEventListener("change", placePin));
+showKind(false);
+showCamera();
+</script>
+{% endblock %}

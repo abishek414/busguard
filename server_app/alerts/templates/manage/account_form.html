@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{% if account %}Edit {{ account.username }}{% else %}New account{% endif %} - BusGuard{% endblock %}
+{% block content %}
+<a href="{% url 'alerts:manage_accounts' %}" class="small">&larr; Accounts</a>
+<h1 class="h4 my-2">{% if account %}Edit account: {{ account.username }}{% else %}New account{% endif %}</h1>
+
+<div class="card shadow-sm" style="max-width: 640px">
+  <div class="card-body">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="alert alert-danger py-2">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+      <div class="row g-3">
+        {% for field in form %}
+          <div class="{% if field.name == 'first_name' or field.name == 'last_name' or field.name == 'role' or field.name == 'phone' %}col-sm-6{% else %}col-12{% endif %}">
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+            {% for e in field.errors %}<div class="small text-danger">{{ e }}</div>{% endfor %}
+          </div>
+        {% endfor %}
+      </div>
+      <div class="form-text mt-3">
+        <b>System manager</b>: these pages + the control room. <b>Control room checker</b>: control room only.
+        <b>Field officer</b>: the officer phone screen.
+      </div>
+      <div class="d-flex gap-2 mt-3">
+        <button class="btn btn-primary">Save</button>
+        <a class="btn btn-outline-secondary" href="{% url 'alerts:manage_accounts' %}">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Incident #{{ i.pk }} - BusGuard{% endblock %}
+{% block content %}
+<a href="{% url 'alerts:manage_history' %}{% if back %}?{{ back }}{% endif %}" class="small">&larr; Incident history</a>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 my-2">
+  <h1 class="h4 m-0">{{ i.bus_id }} <small class="text-secondary">#{{ i.pk }}</small></h1>
+  {% if i.status == "resolved" and i.real_fight %}<span class="badge text-bg-danger fs-6">{{ i.outcome }}</span>
+  {% elif i.status == "resolved" %}<span class="badge text-bg-success fs-6">{{ i.outcome }}</span>
+  {% elif i.status == "dismissed" %}<span class="badge text-bg-secondary fs-6">{{ i.outcome }}</span>
+  {% else %}<span class="badge text-bg-warning fs-6">{{ i.outcome }}</span>{% endif %}
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card shadow-sm"><div class="card-body">
+      {% if i.video %}
+        <video class="video-box" src="{{ i.video.url }}" controls muted playsinline preload="metadata"></video>
+      {% else %}
+        <p class="text-secondary mb-0">No clip.</p>
+      {% endif %}
+    </div></div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card shadow-sm mb-3"><div class="card-body">
+      <h2 class="h6 text-uppercase text-secondary">What happened</h2>
+      <dl class="row small mb-0">
+        <dt class="col-5">Reported</dt><dd class="col-7">{{ i.created_at|date:"D d M Y, H:i:s" }}</dd>
+        <dt class="col-5">Where</dt>
+        <dd class="col-7">{% if i.latitude is not None %}{{ i.latitude|floatformat:5 }}, {{ i.longitude|floatformat:5 }}
+          <br><a href="{{ i.map_url }}" target="_blank" rel="noopener">Show in Google Maps</a>{% else %}Unknown{% endif %}</dd>
+        <dt class="col-5">AI</dt>
+        <dd class="col-7">{% if i.fight_score is not None %}{% widthratio i.fight_score 1 100 %}% fight score{% else %}Manual alert{% endif %}
+          {% if i.ai_note %}<div class="text-secondary">{{ i.ai_note }}</div>{% endif %}</dd>
+        <dt class="col-5">Control room</dt>
+        <dd class="col-7">{% if i.checked_by %}{{ i.checked_by.get_full_name|default:i.checked_by.username }}{% else %}-{% endif %}
+          {% if i.checker_note %}<div class="text-secondary">"{{ i.checker_note }}"</div>{% endif %}</dd>
+        <dt class="col-5">Officer</dt>
+        <dd class="col-7">{% if i.assigned_officer %}{{ i.assigned_officer.get_full_name|default:i.assigned_officer.username }}{% else %}-{% endif %}
+          {% if i.officer_note %}<div class="text-secondary">"{{ i.officer_note }}"</div>{% endif %}</dd>
+        <dt class="col-5">Real fight?</dt>
+        <dd class="col-7">{% if i.real_fight is True %}Yes{% elif i.real_fight is False %}No{% elif i.status == "dismissed" %}No (dismissed){% else %}-{% endif %}</dd>
+      </dl>
+    </div></div>
+
+    <div class="card shadow-sm"><div class="card-body">
+      <h2 class="h6 text-uppercase text-secondary">Timeline</h2>
+      <ul class="list-unstyled small mb-2">
+        <li><b>{{ i.created_at|time:"H:i:s" }}</b> Reported by the camera</li>
+        {% if i.assigned_at %}<li><b>{{ i.assigned_at|time:"H:i:s" }}</b> Sent to the officer</li>{% endif %}
+        {% if i.on_way_at %}<li><b>{{ i.on_way_at|time:"H:i:s" }}</b> Officer on the way</li>{% endif %}
+        {% if i.closed_at %}<li><b>{{ i.closed_at|time:"H:i:s" }}</b> {{ i.get_status_display }}</li>{% endif %}
+      </ul>
+      {% if i.response_minutes is not None %}<p class="small mb-1">Officer response: <b>{{ i.response_minutes }} min</b></p>{% endif %}
+      {% if i.total_minutes is not None %}<p class="small mb-0">Total time to close: <b>{{ i.total_minutes }} min</b></p>{% endif %}
+    </div></div>
+  </div>
+</div>
+{% endblock %}

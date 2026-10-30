@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Incident history - BusGuard{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <h1 class="h4 m-0">Incident history</h1>
+  <a class="btn btn-sm btn-outline-primary" href="?{{ query }}{% if query %}&amp;{% endif %}download=csv">Download as spreadsheet (CSV)</a>
+</div>
+
+<form method="get" class="card shadow-sm mb-3"><div class="card-body">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-4">
+      <label class="form-label small" for="q">Search</label>
+      <input class="form-control form-control-sm" id="q" name="q" value="{{ filters.q }}"
+             placeholder="Bus, area, officer or note">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small" for="show">Show</label>
+      <select class="form-select form-select-sm" id="show" name="show">
+        {% for value, label in show_choices %}
+          <option value="{{ value }}" {% if value == filters.show %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label small" for="from">From</label>
+      <input class="form-control form-control-sm" type="date" id="from" name="from" value="{{ filters.from }}">
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label small" for="to">To</label>
+      <input class="form-control form-control-sm" type="date" id="to" name="to" value="{{ filters.to }}">
+    </div>
+    <div class="col-md-1 d-grid">
+      <button class="btn btn-sm btn-primary">Find</button>
+    </div>
+  </div>
+  {% if query %}<a class="small d-inline-block mt-2" href="{% url 'alerts:manage_history' %}">Clear search</a>{% endif %}
+</div></form>
+
+<p class="small text-secondary mb-2">{{ total }} incident{{ total|pluralize }} found.</p>
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0 small">
+      <thead class="table-light">
+        <tr><th>#</th><th>Reported</th><th>Bus or area</th><th>AI</th><th>Outcome</th><th>Officer</th>
+            <th>Response</th><th>Total time</th><th></th></tr>
+      </thead>
+      <tbody>
+      {% for i in page %}
+        <tr>
+          <td class="text-secondary">{{ i.pk }}</td>
+          <td class="text-nowrap">{{ i.created_at|date:"D d M Y" }}<br><span class="text-secondary">{{ i.created_at|time:"H:i" }}</span></td>
+          <td class="fw-semibold">{{ i.bus_id }}</td>
+          <td>{% if i.fight_score is not None %}{% widthratio i.fight_score 1 100 %}%{% else %}<span class="text-secondary">manual</span>{% endif %}</td>
+          <td>
+            {% if i.status == "resolved" and i.real_fight %}<span class="badge text-bg-danger">{{ i.outcome }}</span>
+            {% elif i.status == "resolved" %}<span class="badge text-bg-success">{{ i.outcome }}</span>
+            {% elif i.status == "dismissed" %}<span class="badge text-bg-secondary">{{ i.outcome }}</span>
+            {% else %}<span class="badge text-bg-warning">{{ i.outcome }}</span>{% endif %}
+          </td>
+          <td>{% if i.assigned_officer %}{{ i.assigned_officer.get_full_name|default:i.assigned_officer.username }}{% else %}<span class="text-secondary">-</span>{% endif %}</td>
+          <td>{% if i.response_minutes is not None %}{{ i.response_minutes }} min{% else %}<span class="text-secondary">-</span>{% endif %}</td>
+          <td>{% if i.total_minutes is not None %}{{ i.total_minutes }} min{% else %}<span class="text-secondary">-</span>{% endif %}</td>
+          <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{% url 'alerts:manage_incident' i.pk %}?back={{ query|urlencode }}">View</a></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="9" class="text-secondary py-3">No incidents found.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if page.paginator.num_pages > 1 %}
+  <nav class="d-flex justify-content-between align-items-center mt-3 small">
+    <span class="text-secondary">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+    <div class="d-flex gap-2">
+      {% if page.has_previous %}<a class="btn btn-sm btn-outline-secondary" href="?{{ query }}{% if query %}&amp;{% endif %}page={{ page.previous_page_number }}">&larr; Newer</a>{% endif %}
+      {% if page.has_next %}<a class="btn btn-sm btn-outline-secondary" href="?{{ query }}{% if query %}&amp;{% endif %}page={{ page.next_page_number }}">Older &rarr;</a>{% endif %}
+    </div>
+  </nav>
+{% endif %}
+{% endblock %}

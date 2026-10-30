@@ -1,0 +1,30 @@
+# ---- Secrets: never upload these ----
+*.pem
+*.key
+.env
+
+# ---- Python ----
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# ---- Server data (made on each computer) ----
+server_app/db.sqlite3
+server_app/media/
+server_app/staticfiles/
+server_app/training_data/
+server_app/models/history/
+# Model files: only the trained fight model is uploaded (3 MB)
+*.pt
+!server_app/models/fight_cls.pt
+
+# ---- Camera ----
+camera_app/clips/
+camera_app/demo_videos/
+
+# ---- Other ----
+*.tgz
+*.zip
+.DS_Store
+Thumbs.db

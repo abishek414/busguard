@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Control room - BusGuard{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'alerts/leaflet/leaflet.css' %}">{% endblock %}
+{% block container %}container-fluid{% endblock %}
+{% block content %}
+
+<!-- Shown until the checker clicks Start (browsers need a click before playing sound) -->
+<div id="start-box" class="alert alert-primary d-flex justify-content-between align-items-center">
+  <span>Click <b>Start monitoring</b> to turn on live alerts and sound.</span>
+  <button id="start-btn" class="btn btn-primary">Start monitoring</button>
+</div>
+
+<div id="alert-banner" class="alert alert-danger d-none fw-semibold" role="alert"></div>
+
+<div class="d-flex flex-wrap gap-3 align-items-center mb-3">
+  <h1 class="h4 m-0">Control room</h1>
+  <span id="live-status" class="badge text-bg-secondary">Connecting...</span>
+  <span id="model-status" class="badge text-bg-light border"></span>
+</div>
+
+<div class="row g-2 mb-3 text-center stats">
+  <div class="col"><div class="card card-body py-2"><div class="stat" id="stat-open">-</div><small class="text-secondary">Open now</small></div></div>
+  <div class="col"><div class="card card-body py-2"><div class="stat" id="stat-today">-</div><small class="text-secondary">Incidents today</small></div></div>
+  <div class="col"><div class="card card-body py-2"><div class="stat" id="stat-resolved">-</div><small class="text-secondary">Resolved today</small></div></div>
+  <div class="col"><div class="card card-body py-2"><div class="stat" id="stat-response">-</div><small class="text-secondary">Avg. officer response</small></div></div>
+  <div class="col"><div class="card card-body py-2"><div class="stat" id="stat-officers">-</div><small class="text-secondary">Officers on duty</small></div></div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div id="map" class="map-box"></div>
+      <div class="card-body py-2 small text-secondary d-flex flex-wrap gap-3">
+        <span><span class="dot dot-green"></span> Bus, normal</span>
+        <span><span class="dot dot-red"></span> Bus with possible fight / new incident</span>
+        <span><span class="dot dot-orange"></span> Officer on a job</span>
+        <span><span class="dot dot-blue"></span> Officer on duty</span>
+        <span><span class="dot dot-grey"></span> Offline</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <h2 class="h6 text-uppercase text-secondary">Live buses</h2>
+    <div id="bus-list"><div class="text-secondary small">No cameras connected yet.</div></div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <h2 class="h6 text-uppercase text-secondary">Active incidents</h2>
+    <div id="active-list"><div class="text-secondary">Click Start monitoring.</div></div>
+
+    <h2 class="h6 text-uppercase text-secondary mt-4">Closed in the last 24 hours</h2>
+    <div id="recent-list" class="small"></div>
+  </div>
+
+  <div class="col-lg-8">
+    <div id="detail" class="card shadow-sm">
+      <div class="card-body text-secondary text-center py-5">Select an incident to see the clip.</div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'alerts/leaflet/leaflet.js' %}"></script>
+<script src="{% static 'alerts/map.js' %}"></script>
+<script src="{% static 'alerts/control.js' %}"></script>
+{% endblock %}

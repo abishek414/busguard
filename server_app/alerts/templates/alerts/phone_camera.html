@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Bus camera - {{ bus.name }}{% endblock %}
+{% block content %}
+<div class="mx-auto" style="max-width: 520px">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <div>
+      <h1 class="h5 m-0">Bus camera</h1>
+      <div class="text-secondary small">{{ bus.name }}</div>
+    </div>
+    <div class="small text-end">
+      <div><span id="dot-cam" class="pc-dot"></span> Camera</div>
+      <div><span id="dot-gps" class="pc-dot"></span> GPS</div>
+      <div><span id="dot-net" class="pc-dot"></span> Azure</div>
+    </div>
+  </div>
+
+  {% if not bus.enabled %}
+    <div class="alert alert-danger">{{ bus.name }} is switched off by the system manager.</div>
+  {% endif %}
+
+  <div class="pc-view mb-2">
+    <video id="video" playsinline muted autoplay></video>
+    <div id="ai" class="pc-ai">Tap Start</div>
+    <div id="rec" class="pc-rec d-none">&#9679; REC <span id="rec-left"></span></div>
+  </div>
+
+  <div id="msg" class="small text-secondary mb-2">Camera and location stay on this phone until you tap Start.</div>
+
+  <div class="d-grid gap-2">
+    <button id="start" class="btn btn-success btn-lg">Start</button>
+    <button id="alert" class="btn btn-danger btn-lg" disabled>Send alert now</button>
+    <button id="flip" class="btn btn-outline-secondary btn-sm" disabled>Switch front / back camera</button>
+  </div>
+
+  <p class="small text-secondary mt-3 mb-0">
+    Keep this page open with the screen on. Photos go to Azure about once a second; a
+    {{ clip_seconds }}-second clip is only recorded and sent when the AI sees a fight in
+    several photos in a row, or when you tap <b>Send alert now</b>.
+    {% if bus.gps_source != "tracker" %}
+      <br><b>GPS:</b> the map position comes from <i>{{ bus.get_gps_source_display }}</i>, so this phone's
+      GPS isn't used. To use it, the system manager sets the camera to <i>Phone used as the camera</i>.
+    {% endif %}
+  </p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const BUS = {
+  key: "{{ bus.device_key|escapejs }}",
+  clipSeconds: {{ clip_seconds }},
+  useGps: {% if bus.gps_source == "tracker" %}true{% else %}false{% endif %},
+};
+</script>
+<script src="{% static 'alerts/phone_camera.js' %}"></script>
+{% endblock %}

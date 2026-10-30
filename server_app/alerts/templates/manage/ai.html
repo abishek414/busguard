@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}AI improvement - BusGuard{% endblock %}
+{% block content %}
+<h1 class="h4 mb-1">AI improvement</h1>
+<p class="text-secondary">Every incident people handle teaches the AI: a clip the control room dismisses is a
+  <b>false alarm</b>, and the officer's answer when resolving says whether it was a <b>real fight</b>.
+  Retraining uses these examples, tests the new model against the current one on the same photos,
+  and only switches if the new one is at least as good.</p>
+
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card shadow-sm"><div class="card-body">
+      <h2 class="h6 text-uppercase text-secondary">Current model</h2>
+      <p class="fs-4 mb-0" id="ai-model">-</p>
+      <p class="small text-secondary mb-0" id="ai-model-note"></p>
+    </div></div>
+
+    <div class="card shadow-sm mt-3"><div class="card-body">
+      <h2 class="h6 text-uppercase text-secondary">Examples checked by people</h2>
+      <div class="row text-center g-2 mb-2">
+        <div class="col-4"><div class="fs-3 fw-semibold text-danger" id="ai-fight">-</div><div class="small text-secondary">real fights</div></div>
+        <div class="col-4"><div class="fs-3 fw-semibold text-success" id="ai-normal">-</div><div class="small text-secondary">false alarms</div></div>
+        <div class="col-4"><div class="fs-3 fw-semibold" id="ai-new">-</div><div class="small text-secondary">new since last training</div></div>
+      </div>
+      <div id="ai-action"></div>
+    </div></div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card shadow-sm"><div class="card-body">
+      <h2 class="h6 text-uppercase text-secondary">Training history</h2>
+      <div class="table-responsive">
+        <table class="table table-sm small align-middle mb-0">
+          <thead><tr><th>Started</th><th>Result</th><th>Examples</th><th>Accuracy (old &rarr; new)</th></tr></thead>
+          <tbody id="ai-history"><tr><td colspan="4" class="text-secondary">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'alerts/ai_improvement.js' %}"></script>
+{% endblock %}
