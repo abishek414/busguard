@@ -83,9 +83,10 @@ class Bus(models.Model):
     last_note = models.CharField(max_length=255, blank=True)
     frame_path = models.CharField(max_length=255, blank=True)  # latest photo, inside MEDIA_ROOT
 
-    # Used by Azure to decide when to ask the bus for a clip
-    fight_streak = models.PositiveIntegerField(default=0)
-    peak_score = models.FloatField(null=True, blank=True)
+    # Used by Azure to decide when to ask the bus for a clip: the scores of the last few
+    # photos (newest last, e.g. "0.05,0.91,0.40,0.88"); an alert needs FIGHT_HITS of the
+    # last FIGHT_WINDOW photos to look like a fight
+    recent_scores = models.CharField(max_length=200, blank=True)
     alert_score = models.FloatField(null=True, blank=True)
     last_alert_at = models.DateTimeField(null=True, blank=True)
 
@@ -95,6 +96,13 @@ class Bus(models.Model):
 
     def __str__(self):
         return self.name
+
+    def add_score(self, score, window):
+        """Remember this photo's score; keep only the last `window` scores."""
+        scores = [float(x) for x in self.recent_scores.split(",") if x] + [round(score, 3)]
+        scores = scores[-window:]
+        self.recent_scores = ",".join(f"{s:g}" for s in scores)
+        return scores
 
     def is_online(self):
         return (self.last_seen is not None and

@@ -83,8 +83,8 @@ def home(request):
 # ---------- 1. Bus camera API ----------
 #
 #  /api/frame/   the bus sends one small photo about every second.
-#                Azure's AI scores it and replies. After FIGHT_STREAK "fight"
-#                photos in a row, the reply says record=true.
+#                Azure's AI scores it and replies. When FIGHT_HITS of the last
+#                FIGHT_WINDOW photos look like a fight, the reply says record=true.
 #  /api/upload/  the bus then sends the 20-second clip, which becomes an incident.
 
 def bus_from_request(request):
@@ -148,12 +148,9 @@ def frame(request):
     bus.last_note = note[:255]
 
     is_fight = score >= settings.FIGHT_THRESHOLD
-    if is_fight:
-        bus.fight_streak += 1
-        bus.peak_score = max(score, bus.peak_score or 0)
-    else:
-        bus.fight_streak = 0
-        bus.peak_score = None
+    scores = bus.add_score(score, settings.FIGHT_WINDOW)
+    fight_scores = [s for s in scores if s >= settings.FIGHT_THRESHOLD]
+    hits = len(fight_scores)
 
     record = False
     cooled_down = (bus.last_alert_at is None or
@@ -161,13 +158,13 @@ def frame(request):
     # One incident per bus at a time: while this bus already has an open incident
     # (new, sent to an officer or officer on the way), don't raise another one.
     already_open = Incident.objects.filter(bus_id=name, status__in=Incident.ACTIVE).exists()
-    if bus.fight_streak >= settings.FIGHT_STREAK and cooled_down and not already_open:
+    if hits >= settings.FIGHT_HITS and cooled_down and not already_open:
         record = True
         bus.last_alert_at = now
-        bus.alert_score = bus.peak_score
-        bus.fight_streak = 0
-        log.info("%s: %d fight photos in a row (peak %.0f%%) -> asking for a clip",
-                 name, settings.FIGHT_STREAK, bus.peak_score * 100)
+        bus.alert_score = max(fight_scores)
+        bus.recent_scores = ""          # start counting again after an alert
+        log.info("%s: fight in %d of the last %d photos (peak %.0f%%) -> asking for a clip",
+                 name, hits, len(scores), bus.alert_score * 100)
 
     if settings.SHOW_LIVE_FRAMES:
         rel = f"frames/bus_{bus.pk}.jpg"
@@ -181,7 +178,9 @@ def frame(request):
     return JsonResponse({
         "score": round(score * 100),
         "fight": is_fight,
-        "streak": bus.fight_streak,
+        "hits": hits,                       # photos that looked like a fight...
+        "window": settings.FIGHT_WINDOW,    # ...out of the last this-many
+        "streak": hits,                     # (older name for "hits")
         "record": record,
         "note": note,
     })
@@ -205,7 +204,8 @@ def upload(request):
         score, note = None, "Manual alert sent from the bus"
     elif bus and bus.alert_score is not None:
         score = bus.alert_score
-        note = f"Azure AI saw a fight in {settings.FIGHT_STREAK} photos in a row (peak {score:.0%})"
+        note = (f"Azure AI saw a fight in {settings.FIGHT_HITS} of the last {settings.FIGHT_WINDOW} photos "
+                f"(peak {score:.0%})")
     else:
         score, note = None, "Clip sent by the bus"
 

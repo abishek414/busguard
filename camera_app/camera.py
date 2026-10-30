@@ -8,7 +8,7 @@ It runs on the small computer next to the camera. It has NO AI of its own:
   2. About once a second (when there is movement) it sends a small photo to
      the BusGuard server on Azure.
   3. Azure's AI scores the photo and replies "normal" or "fight".
-  4. When Azure has seen a fight in several photos in a row, it replies
+  4. When Azure has seen a fight in several of the last few photos, it replies
      record=true. The camera then sends a 20-second clip (including the
      3 seconds before), which pops up in the control room.
 
@@ -78,7 +78,8 @@ class AzureLink:
                     continue
                 d = r.json()
                 if d["fight"]:
-                    self.result = {"text": f"Azure AI: POSSIBLE FIGHT {d['score']}%  ({d['streak']} in a row)",
+                    self.result = {"text": f"Azure AI: POSSIBLE FIGHT {d['score']}%  "
+                                           f"({d['hits']} of last {d['window']})",
                                    "colour": (0, 0, 255)}
                 else:
                     self.result = {"text": f"Azure AI: normal {d['score']}%", "colour": (0, 200, 0)}

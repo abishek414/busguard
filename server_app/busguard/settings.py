@@ -34,8 +34,10 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 FIGHT_MODEL_PATH = BASE_DIR / os.environ.get("FIGHT_MODEL_PATH", "models/fight_cls.pt")
 # A photo counts as "fight" when the AI score is at least this (0.0 - 1.0)
 FIGHT_THRESHOLD = float(os.environ.get("FIGHT_THRESHOLD", "0.6"))
-# How many "fight" photos in a row before Azure tells the bus to record a clip
-FIGHT_STREAK = int(os.environ.get("FIGHT_STREAK", "3"))
+# Azure tells the bus to record a clip when FIGHT_HITS of the last FIGHT_WINDOW photos
+# look like a fight (e.g. 3 of the last 6), so one blocked or blurry photo doesn't stop it
+FIGHT_HITS = int(os.environ.get("FIGHT_HITS", os.environ.get("FIGHT_STREAK", "3")))
+FIGHT_WINDOW = int(os.environ.get("FIGHT_WINDOW", "6"))
 # Seconds before the same bus can trigger another alert
 ALERT_COOLDOWN = int(os.environ.get("ALERT_COOLDOWN", "60"))
 # Self-learning: where the server keeps training photos, and how long a retrain runs

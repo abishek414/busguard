@@ -3,7 +3,7 @@
 This is the "Azure" part of BusGuard. It does four jobs:
 
 1. **AI on every photo.** Buses send a small photo about once a second (`/api/frame/`).
-   The AI scores it. After **3 "fight" photos in a row**, it tells the bus to send a
+   The AI scores it. When **3 of the last 6 photos** look like a fight, it tells the bus to send a
    20-second clip (`/api/upload/`), which becomes an **incident**.
 2. **Control room** (`/control/`), for the checker who always has it open:
    - stats bar (open now, today, resolved, average officer response time)
@@ -131,7 +131,8 @@ python manage.py test alerts
 | Setting | Default | Meaning |
 |---|---|---|
 | `FIGHT_THRESHOLD` | `0.6` | A photo counts as "fight" at this AI score or above |
-| `FIGHT_STREAK` | `3` | "Fight" photos in a row before a clip is requested |
+| `FIGHT_HITS` | `3` | "Fight" photos needed... |
+| `FIGHT_WINDOW` | `6` | ...out of this many latest photos before a clip is requested |
 | `ALERT_COOLDOWN` | `60` | Seconds before the same bus can raise another alert |
 | `OFFICER_REPLY_SECONDS` | `60` | Seconds before the no-reply alarm |
 | `SHOW_LIVE_FRAMES` | `True` | Show each bus's latest photo in the control room |

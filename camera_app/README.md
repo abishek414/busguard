@@ -10,7 +10,7 @@ the phone camera page instead.)
    BusGuard server.
 3. The server's AI scores the photo and replies **normal** or **possible fight**. The answer is
    shown at the top of the camera window.
-4. When the AI sees a fight in **3 photos in a row**, the server tells the camera to send a
+4. When the AI sees a fight in **3 of the last 6 photos**, the server tells the camera to send a
    **20-second clip** (including the 3 seconds *before*). The clip pops up in the control room.
 
 When nothing is moving, it only sends a photo every 5 seconds, which saves data.
@@ -67,7 +67,7 @@ file (it plays on repeat).
 
 ## What the window shows
 
-- Top line: **Azure AI: normal 6%** (green) or **POSSIBLE FIGHT 87% (2 in a row)** (red)
+- Top line: **Azure AI: normal 6%** (green) or **POSSIBLE FIGHT 87% (2 of last 6)** (red)
 - Second line: name and movement level
 - **REC** while recording a clip, then "Clip sent to control room"
 

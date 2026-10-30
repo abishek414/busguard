@@ -36,7 +36,7 @@
   <p class="small text-secondary mt-3 mb-0">
     Keep this page open with the screen on. Photos go to Azure about once a second; a
     {{ clip_seconds }}-second clip is only recorded and sent when the AI sees a fight in
-    several photos in a row, or when you tap <b>Send alert now</b>.
+    several of the last few photos, or when you tap <b>Send alert now</b>.
     {% if bus.gps_source != "tracker" %}
       <br><b>GPS:</b> the map position comes from <i>{{ bus.get_gps_source_display }}</i>, so this phone's
       GPS isn't used. To use it, the system manager sets the camera to <i>Phone used as the camera</i>.

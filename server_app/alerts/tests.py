@@ -46,7 +46,7 @@ def add_officer(username, name, lat, lon):
     return user
 
 
-@override_settings(MEDIA_ROOT=TEMP_MEDIA, FIGHT_THRESHOLD=0.6, FIGHT_STREAK=3, ALERT_COOLDOWN=60)
+@override_settings(MEDIA_ROOT=TEMP_MEDIA, FIGHT_THRESHOLD=0.6, FIGHT_HITS=3, FIGHT_WINDOW=6, ALERT_COOLDOWN=60)
 class FlowTest(TestCase):
     @classmethod
     def tearDownClass(cls):
@@ -94,6 +94,20 @@ class FlowTest(TestCase):
         self.send_photo(0.9)
         self.send_photo(0.1)
         self.assertFalse(self.send_photo(0.9).json()["record"])
+
+    def test_fight_with_blocked_photos_still_alerts(self):
+        # 3 of the last 6: low photos in the middle (someone blocking the camera) don't reset it
+        replies = [self.send_photo(s).json() for s in (0.85, 0.40, 0.90, 0.30)]
+        self.assertFalse(any(r["record"] for r in replies))
+        self.assertEqual((replies[-1]["hits"], replies[-1]["window"]), (2, 6))
+        self.assertTrue(self.send_photo(0.88).json()["record"])
+        self.assertAlmostEqual(Bus.objects.get().alert_score, 0.90)
+
+    def test_old_fight_photos_drop_out_of_the_window(self):
+        # Two fight-like photos, then 5 normal ones: they're more than 6 photos ago now
+        for s in (0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1):
+            self.assertFalse(self.send_photo(s).json()["record"])
+        self.assertFalse(self.send_photo(0.9).json()["record"])     # only 1 of the last 6
 
     def test_streak_asks_for_clip_then_cooldown(self):
         self.assertFalse(self.send_photo(0.8).json()["record"])

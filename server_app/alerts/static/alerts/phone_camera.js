@@ -114,7 +114,7 @@ async function sendPhoto() {
 function showScore(data) {
   if (data.fight) {
     aiBox.className = "pc-ai fight";
-    aiBox.textContent = `POSSIBLE FIGHT ${data.score}%` + (data.streak ? ` (${data.streak} in a row)` : "");
+    aiBox.textContent = `POSSIBLE FIGHT ${data.score}%` + (data.hits ? ` (${data.hits} of last ${data.window})` : "");
   } else {
     aiBox.className = "pc-ai normal";
     aiBox.textContent = `Azure AI: normal ${data.score}%`;
